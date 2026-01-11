@@ -184,7 +184,7 @@ resource "aws_lambda_function" "etl" {
     DB_NAME = "facebook"
   }
 }
-  #depends_on = [aws_nat_gateway.nat]
+
   depends_on = [
   aws_nat_gateway.nat,
   aws_db_instance.postgres
