@@ -1,4 +1,4 @@
-<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/adbde217-fedd-43e9-af87-f134e77f57cd" />
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/404d4054-0666-4d0e-bec8-d41c81ab745d" />
 
 
 ## Lambda ETL | AWS 
