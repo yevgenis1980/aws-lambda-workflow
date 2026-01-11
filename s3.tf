@@ -1,8 +1,7 @@
 
 # ----------------------
-# S3 Bucket
+# Create S3 Bucket
 # ----------------------
-
 resource "aws_s3_bucket" "etl_bucket" {
   depends_on = [aws_nat_gateway.nat]
   bucket     = "facebook-etl-bucket-${random_id.bucket_suffix.hex}"
@@ -54,4 +53,18 @@ resource "aws_iam_policy" "lambda_s3_policy" {
 resource "aws_iam_role_policy_attachment" "lambda_s3_attach" {
   role       = aws_iam_role.lambda_exec.name
   policy_arn = aws_iam_policy.lambda_s3_policy.arn
+}
+
+
+# ----------------------
+# Upload Data to S3 Bucket
+# ----------------------
+resource "aws_s3_bucket_object" "etl_json" {
+  bucket       = aws_s3_bucket.etl_bucket.id
+  key          = "etl-data/config.json"   # path in bucket
+  source       = "config/config.json"     # local file
+  content_type = "application/json"
+
+  # Ensure the bucket is created first
+  depends_on = [aws_s3_bucket.etl_bucket]
 }
