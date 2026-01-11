@@ -2,8 +2,6 @@
 # ----------------------
 # POSTGRES RDS INSTANCE
 # ----------------------
-
-# Security group for RDS
 resource "aws_security_group" "rds_sg" {
   name        = "rds-sg"
   description = "Allow Lambda to access Postgres"
@@ -15,6 +13,15 @@ resource "aws_security_group" "rds_sg" {
     to_port         = 5432
     protocol        = "tcp"
     security_groups = [aws_security_group.lambda_sg.id]
+  }
+
+  # Allow specific IP
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["84.228.99.5/32"]  # replace with your IP
+    description = "Allow my office IP"
   }
 
   # Outbound: allow all
@@ -63,3 +70,31 @@ resource "aws_db_instance" "postgres" {
   depends_on = [aws_nat_gateway.nat]
 }
 
+
+# ----------------------
+# Initialize DB + Tables
+# ----------------------
+resource "null_resource" "init_db" {
+  depends_on = [aws_db_instance.postgres]
+
+  provisioner "local-exec" {
+    command = <<EOT
+timeout=300
+elapsed=0
+until PGPASSWORD="SuperSecret123!" psql -h ${aws_db_instance.postgres.endpoint} -U postgres -d postgres -c '\\q'; do
+  sleep 10
+  elapsed=$((elapsed + 10))
+  if [ $elapsed -ge $timeout ]; then
+    echo "RDS is still not available after 5 minutes, exiting..."
+    exit 1
+  fi
+done
+
+# Create database if it doesn't exist
+PGPASSWORD="SuperSecret123!" psql -h ${aws_db_instance.postgres.endpoint} -U postgres -d postgres -c "CREATE DATABASE facebook;"
+
+# Initialize tables
+PGPASSWORD="SuperSecret123!" psql -v ON_ERROR_STOP=1 -h ${aws_db_instance.postgres.endpoint} -U postgres -d facebook -f ./init.sql
+EOT
+  }
+}
